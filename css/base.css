@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,700;1,700&family=IBM+Plex+Sans:ital@0;1&display=swap');
+
+body {
+    --margin: 45px;
+    --header-height: #{toScale(50px)};
+
+    --black: #1d1914;
+    --off-white: #fff5ec;
+    --primary: #ac7e48;
+
+    --surprised: #5648ac;
+    --happy: #48ac8e;
+    --fearful: #9e48ac;
+    --sad: #4888ac;
+    --disgusted: #86ac48;
+    --angry: #ac4848;
+
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 14px;
+    background: var(--black);
+    color: var(--off-white);
+    text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: var(--font-mono);
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 48px;
+}
+h2 {
+    font-size: 36px;
+}
+h3 {
+    font-size: 24px;
+}
+h4 {
+    font-size: 18px;
+}
+h5 {
+    font-size: 18px;
+}
+
+p {
+    font-size: 14px;
+}
+
+.contained {
+    padding-right: var(--margin);
+    padding-left: var(--margin);
+    box-sizing: border-box;
+    max-width: 1340px;
+    margin-right: auto;
+    margin-left: auto;
+}
+.contained .bg-noise {
+    transition: opacity 0.6s;
+    background-image: url(../images/LoopableNoise.gif);
+    background-size: 90px;
+    transform: translateZ(0);
+    opacity: 0.2;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    position: fixed;
+    pointer-events: none;
+}
