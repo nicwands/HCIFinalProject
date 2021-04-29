@@ -7,6 +7,9 @@
         <link rel="shortcut icon" type="image/png" href="images/favicon.png"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="css/base.css">
+        <link rel="stylesheet" href="css/main.css">
+        <!-- scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/dist/face-api.js"></script>
     </head>
     <body>
         <div class="contained">
@@ -16,9 +19,14 @@
             <h2>Header one</h2>
             <h3>Header two</h2>
             <h4>Header three</h2>
-            <h5>Header four</h2>
-    
+
+            <h5>Large Paragraph</h2>
             <p>Small paragraph</p>
+
+            <div class="video-wrapper">
+                <video id="inputVideo" autoplay muted></video>
+                <canvas id="overlay" />
+              </div>
         </div>
         
         <script src="js/main.js" async defer></script>
