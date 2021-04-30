@@ -84,3 +84,25 @@ p {
     right: 0;
     bottom: 0;
 }
+
+.surprised {
+    background: var(--surprised);
+}
+.happy {
+    background: var(--happy);
+}
+.angry {
+    background: var(--angry);
+}
+.fearful {
+    background: var(--fearful);
+}
+.disgusted {
+    background: var(--disgusted);
+}
+.neutral {
+    background: var(--primary);
+}
+.sad {
+    background: var(--sad);
+}
