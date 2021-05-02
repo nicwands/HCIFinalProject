@@ -106,3 +106,26 @@ p {
 .sad {
     background: var(--sad);
 }
+
+.playlist {
+    position: absolute;
+    top: 20px;
+    bottom: 40px;
+    right: 20px;
+    float: left;
+    height: 380px;
+    width: 300px;
+}
+
+.shadow {
+    position: absolute;
+    top: 30px;
+    bottom: 50px;
+    right: 30px;
+    float: left;
+    height: 380px;
+    width: 300px;
+    border-color: #48ac8e;
+    border-style: solid;
+    background-color: transparent;
+}
