@@ -13,43 +13,33 @@
         <script type="text/javascript" src="js/aalib.js"></script>
     </head>
     <body>
+        <div class="bg-noise"></div>
+
         <div class="overlay">
             <div id="colorBox" class="neutral"></div>
         </div>
 
-        <div class="contained">
-            <div class="bg-noise"></div>
+        <div class="contained app-container">
+            <div class="video-area" id="camContainer">
+                <h1 class="emotion-header" id="emotionHeader">HAPPY</h1>
 
-            <h1 class="emotion-header">HAPPY</h1>
+                <div class="playlist-container">
+                    <div id="shadow" class="neutral"></div>
+                    <iframe
+                        id="spotifyPlayer"
+                        src="https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup"
+                        width="300"
+                        height="380"
+                        frameborder="0"
+                        allowtransparency="true"
+                        allow="encrypted-media"
+                    ></iframe>
+                </div>
 
-            <div class="video-wrapper" id="camContainer">
                 <video id="inputVideo" autoplay muted></video>
-                <!-- <canvas id="hiddenCanvas"></canvas> -->
             </div>
 
-            <div class="playlist-container">
-                <div class="shadow"></div>
-                <iframe
-                    src="https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup"
-                    width="300"
-                    height="380"
-                    frameborder="0"
-                    allowtransparency="true"
-                    allow="encrypted-media"
-                ></iframe>
-            </div>
-
-            <!-- Happy Playlist -->
-            <!-- <iframe src="https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe> -->
-
-            <!-- Sad Playlist -->
-            <!-- <iframe src="https://open.spotify.com/embed/playlist/17Y3RLFVntdr03GZKu0cGq" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe> -->
-
-            <!-- Angry Playlist -->
-            <!-- <iframe src="https://open.spotify.com/embed/playlist/1lQDVNlOfd8jkcvdUbU25J" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe> -->
-
-            <!-- Surprised Playlist -->
-            <!-- <iframe src="https://open.spotify.com/embed/playlist/43Fufavc3oJplTbaDkcdQg" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe> -->
+            <canvas id="hiddenCanvas"></canvas>
         </div>
 
         <script src="js/main.js" async defer></script>

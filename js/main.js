@@ -2,9 +2,30 @@
 const videoEl = document.getElementById('inputVideo')
 const camContainer = document.getElementById('camContainer')
 const colorBox = document.getElementById('colorBox')
+const emotionHeader = document.getElementById('emotionHeader')
+const spotifyPlayer = document.getElementById('spotifyPlayer')
+const playerShadow = document.getElementById('shadow')
 
 let curExpression = 'neutral'
 let expressionTimer = 0
+
+const emotionData = {
+    neutral: {
+        iframeSrc: ''
+    },
+    happy: {
+        iframeSrc: 'https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup'
+    },
+    sad: {
+        iframeSrc: 'https://open.spotify.com/embed/playlist/17Y3RLFVntdr03GZKu0cGq'
+    },
+    surprised: {
+        iframeSrc: 'https://open.spotify.com/embed/playlist/43Fufavc3oJplTbaDkcdQg'
+    },
+    angry: {
+        iframeSrc: 'https://open.spotify.com/embed/playlist/1lQDVNlOfd8jkcvdUbU25J'
+    }
+}
 
 // Load models, set up webcam
 async function run() {
@@ -37,10 +58,19 @@ videoEl.addEventListener('play', () => {
     faceapi.matchDimensions(canvas, displaySize)
 
     window.requestAnimationFrame(function () {
-        // convertASCII(canvas, displaySize)
-        detectFace(canvas, displaySize)
+        processFrame(canvas, displaySize)
     })
 })
+
+// call all frame processes here and repeat on animation frame
+async function processFrame(canvas, displaySize) {
+    await detectFace(canvas, displaySize)
+    await convertASCII(canvas, displaySize)
+
+    window.requestAnimationFrame(function () {
+        processFrame(canvas, displaySize)
+    })
+}
 
 // detect face, landmarks and expressions
 async function detectFace(canvas, displaySize) {
@@ -50,53 +80,19 @@ async function detectFace(canvas, displaySize) {
         .withFaceExpressions()
 
     console.log(detections)
-    readExpression(detections)
-    const resizedDetections = faceapi.resizeResults(detections, displaySize)
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-    faceapi.draw.drawDetections(canvas, resizedDetections)
-    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-    faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
 
-    window.requestAnimationFrame(function () {
-        detectFace(canvas, displaySize)
-    })
-}
+    await readExpression(detections)
 
-async function convertASCII(canvas, displaySize) {
-    // await aalib.read.video
-    //     .fromVideoElement(videoEl)
-    //     .map(aalib.aa(displaySize))
-    //     .map(aalib.render.canvas({ el: canvas }))
+    const resizedDetections = await faceapi.resizeResults(detections, displaySize)
 
-    const fontHeight = 12
-
-    const outputContext = canvas.getContext('2d')
-    const hiddenCanvas = document.getElementById('hiddenCanvas')
-    const hiddenContext = hiddenCanvas.getContext('2d')
-    hiddenCanvas.width = displaySize.width
-    hiddenCanvas.height = displaySize.height
-
-    hiddenContext.drawImage(videoEl, 0, 0, displaySize.width, displaySize.height)
-
-    canvas.textBaseline = 'top'
-    outputContext.font = `${fontHeight}px Consolas`
-
-    const text = outputContext.measureText('@')
-    const fontWidth = parseInt(text.width)
-
-    for (let y = 0; y < displaySize.height; y += fontHeight) {
-        for (let x = 0; x < displaySize.width; x += fontWidth) {
-            const frameSection = hiddenContext.getImageData(x, y, fontWidth, fontHeight)
-            //   const { r, g, b } = getAverageRGB(frameSection);
-
-            //   outputContext.fillStyle = `rgb(${r},${g},${b})`;
-            outputContext.fillText('@', x, y)
-        }
-    }
+    await canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+    // await faceapi.draw.drawDetections(canvas, resizedDetections)
+    await faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
+    // await faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
 }
 
 // find the most likely expression
-function readExpression(detections) {
+async function readExpression(detections) {
     if (detections[0]) {
         const expressions = detections[0].expressions
 
@@ -110,16 +106,81 @@ function readExpression(detections) {
             }
         })
 
-        if (curExpression !== expressionRead) {
-            expressionTimer = 0
-            colorBox.style.height = 0
-            curExpression = expressionRead
-            colorBox.className = ''
-            colorBox.className = curExpression
-        } else {
-            expressionTimer += 1
-            colorBox.style.height = expressionTimer * 50 + 'px'
+        await updateEmotion(expressionRead)
+    }
+}
+
+async function updateEmotion(expressionRead) {
+    if (curExpression !== expressionRead) {
+        // update current expression
+        curExpression = expressionRead
+
+        // reset color box
+        expressionTimer = 0
+        colorBox.style.height = 0
+        colorBox.className = ''
+        colorBox.className = curExpression
+
+        // update emotion header
+        emotionHeader.innerHTML = curExpression.toUpperCase()
+
+        // update spotify player
+        spotifyPlayer.src = emotionData[curExpression].iframeSrc
+        playerShadow.className = ''
+        playerShadow.className = curExpression
+    } else {
+        expressionTimer += 1
+        colorBox.style.height = expressionTimer + '%'
+    }
+}
+
+async function convertASCII(canvas, displaySize) {
+    const fontHeight = 12
+
+    const outputContext = canvas.getContext('2d')
+    const hiddenCanvas = document.getElementById('hiddenCanvas')
+    const hiddenContext = hiddenCanvas.getContext('2d')
+    hiddenCanvas.width = displaySize.width
+    hiddenCanvas.height = displaySize.height
+
+    await hiddenContext.drawImage(videoEl, 0, 0, displaySize.width, displaySize.height)
+
+    canvas.textBaseline = 'top'
+    outputContext.font = `${fontHeight}px Consolas`
+
+    const text = outputContext.measureText('@')
+    const fontWidth = parseInt(text.width)
+
+    for (let y = 0; y < displaySize.height; y += fontHeight) {
+        for (let x = 0; x < displaySize.width; x += fontWidth) {
+            const frameSection = hiddenContext.getImageData(x, y, fontWidth, fontHeight)
+            const { r, g, b } = getAverageRGB(frameSection)
+
+            const asciiCode = Math.floor(Math.random() * 60 + 60)
+
+            outputContext.fillStyle = `rgb(${r},${g},${b})`
+            outputContext.fillText(String.fromCharCode(asciiCode), x, y)
         }
+    }
+}
+
+function getAverageRGB(frame) {
+    const length = frame.data.length / 4
+
+    let r = 0
+    let g = 0
+    let b = 0
+
+    for (let i = 0; i < length; i++) {
+        r += frame.data[i * 4 + 0]
+        g += frame.data[i * 4 + 1]
+        b += frame.data[i * 4 + 2]
+    }
+
+    return {
+        r: r / length,
+        g: g / length,
+        b: b / length
     }
 }
 
