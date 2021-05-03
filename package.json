@@ -1,0 +1,20 @@
+{
+    "name": "hcifinalproject",
+    "version": "1.0.0",
+    "description": "NIC WANDS, VERA CRABTREE, SHANE FOX, OWEN MATYI",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "npx serve ."
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vcrabtree/HCIFinalProject.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/vcrabtree/HCIFinalProject/issues"
+    },
+    "homepage": "https://github.com/vcrabtree/HCIFinalProject#readme"
+}

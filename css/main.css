@@ -32,3 +32,11 @@
     position: absolute;
     bottom: 0;
 }
+
+#main {
+    background: green;
+}
+
+#hiddenCanvas {
+    opacity: 0;
+}

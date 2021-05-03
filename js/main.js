@@ -38,10 +38,14 @@ videoEl.addEventListener('play', () => {
     const displaySize = { width: videoEl.videoWidth, height: videoEl.videoHeight }
     faceapi.matchDimensions(canvas, displaySize)
 
-    setInterval(async function () {
+    // setInterval(async function () {
+    //     detectFace(canvas, displaySize)
+    //     // await convertASCII(canvas, displaySize)
+    // }, 200)
+    window.requestAnimationFrame(function () {
+        convertASCII(canvas, displaySize)
         detectFace(canvas, displaySize)
-        // await convertASCII(canvas, displaySize)
-    }, 200)
+    })
 })
 
 // detect face, landmarks and expressions
@@ -58,13 +62,43 @@ async function detectFace(canvas, displaySize) {
     faceapi.draw.drawDetections(canvas, resizedDetections)
     faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
     faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+
+    window.requestAnimationFrame(function () {
+        detectFace(canvas, displaySize)
+    })
 }
 
 async function convertASCII(canvas, displaySize) {
-    await aalib.read.video
-        .fromVideoElement(videoEl)
-        .map(aalib.aa(displaySize))
-        .map(aalib.render.canvas({ el: canvas }))
+    // await aalib.read.video
+    //     .fromVideoElement(videoEl)
+    //     .map(aalib.aa(displaySize))
+    //     .map(aalib.render.canvas({ el: canvas }))
+
+    const fontHeight = 12
+
+    const outputContext = canvas.getContext('2d')
+    const hiddenCanvas = document.getElementById('hiddenCanvas')
+    const hiddenContext = hiddenCanvas.getContext('2d')
+    hiddenCanvas.width = displaySize.width
+    hiddenCanvas.height = displaySize.height
+
+    hiddenContext.drawImage(videoEl, 0, 0, displaySize.width, displaySize.height)
+
+    canvas.textBaseline = 'top'
+    outputContext.font = `${fontHeight}px Consolas`
+
+    const text = outputContext.measureText('@')
+    const fontWidth = parseInt(text.width)
+
+    for (let y = 0; y < displaySize.height; y += fontHeight) {
+        for (let x = 0; x < displaySize.width; x += fontWidth) {
+            const frameSection = hiddenContext.getImageData(x, y, fontWidth, fontHeight)
+            //   const { r, g, b } = getAverageRGB(frameSection);
+
+            //   outputContext.fillStyle = `rgb(${r},${g},${b})`;
+            outputContext.fillText('@', x, y)
+        }
+    }
 }
 
 // find the most likely expression
