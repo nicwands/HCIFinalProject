@@ -14,8 +14,6 @@ async function run() {
     await faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL)
     await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
 
-    console.log(document.querySelectorAll('audio'))
-
     // try to access users webcam and stream the images
     // to the video element
     navigator.mediaDevices
@@ -38,12 +36,8 @@ videoEl.addEventListener('play', () => {
     const displaySize = { width: videoEl.videoWidth, height: videoEl.videoHeight }
     faceapi.matchDimensions(canvas, displaySize)
 
-    // setInterval(async function () {
-    //     detectFace(canvas, displaySize)
-    //     // await convertASCII(canvas, displaySize)
-    // }, 200)
     window.requestAnimationFrame(function () {
-        convertASCII(canvas, displaySize)
+        // convertASCII(canvas, displaySize)
         detectFace(canvas, displaySize)
     })
 })

@@ -61,6 +61,9 @@ p {
     max-width: 1340px;
     margin-right: auto;
     margin-left: auto;
+    height: 100vh;
+    min-height: 800px;
+    position: relative;
 }
 .contained .bg-noise {
     transition: opacity 0.6s;
