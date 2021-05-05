@@ -8,6 +8,9 @@ const playerShadow = document.getElementById('shadow')
 
 let curExpression = 'neutral'
 let expressionTimer = 0
+let fullyLoaded = false
+
+let lastFrameTime = 0
 
 const emotionData = {
     neutral: {
@@ -65,9 +68,18 @@ videoEl.addEventListener('play', () => {
 // call all frame processes here and repeat on animation frame
 async function processFrame(canvas, displaySize) {
     await detectFace(canvas, displaySize)
-    await convertASCII(canvas, displaySize)
+    // await convertASCII(canvas, displaySize)
 
-    window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(async function (currentFrameTime) {
+        const elapsedTime = currentFrameTime - lastFrameTime
+
+        // wait to proceed until 200ms has elapsed from the last frame
+        // this throttles animation to 5 fps
+        if (elapsedTime < 200) {
+            await new Promise((res) => setTimeout(res, 200 - elapsedTime))
+        }
+
+        lastFrameTime = currentFrameTime
         processFrame(canvas, displaySize)
     })
 }
@@ -79,7 +91,7 @@ async function detectFace(canvas, displaySize) {
         .withFaceLandmarks(true)
         .withFaceExpressions()
 
-    console.log(detections)
+    // console.log(detections)
 
     await readExpression(detections)
 
@@ -106,36 +118,95 @@ async function readExpression(detections) {
             }
         })
 
-        await updateEmotion(expressionRead)
+        if (highestGrade > 0.8 && expressionRead !== 'neutral') {
+            if (!(fullyLoaded && expressionRead === curExpression)) {
+                await updateEmotion(expressionRead)
+            }
+        }
     }
 }
 
 async function updateEmotion(expressionRead) {
+    // expression changes
     if (curExpression !== expressionRead) {
         // update current expression
         curExpression = expressionRead
+        fullyLoaded = false
 
         // reset color box
         expressionTimer = 0
         colorBox.style.height = 0
         colorBox.className = ''
         colorBox.className = curExpression
-
-        // update emotion header
-        emotionHeader.innerHTML = curExpression.toUpperCase()
-
-        // update spotify player
-        spotifyPlayer.src = emotionData[curExpression].iframeSrc
-        playerShadow.className = ''
-        playerShadow.className = curExpression
+        // expression stays the same
     } else {
-        expressionTimer += 1
-        colorBox.style.height = expressionTimer + '%'
+        if (expressionTimer < 96) {
+            // increase height of the box by 4%
+            expressionTimer += 4
+            colorBox.style.height = expressionTimer + '%'
+        } else if (expressionTimer === 96) {
+            colorBox.style.height = '100%'
+            fullyLoaded = true
+
+            // update emotion header
+            emotionHeader.innerHTML = curExpression.toUpperCase()
+
+            // update spotify player
+            spotifyPlayer.style.opacity = '0'
+            playerShadow.style.opacity = '0'
+            spotifyPlayer.src = emotionData[curExpression].iframeSrc
+            playerShadow.className = ''
+            playerShadow.className = curExpression
+            spotifyPlayer.addEventListener('load', function () {
+                spotifyPlayer.style.opacity = '1'
+                playerShadow.style.opacity = '1'
+                simulateClick()
+            })
+        }
     }
 }
 
+async function simulateClick() {
+    console.log('in simulate')
+    // oEvent = document.createEvent('MouseEvents')
+    // oEvent.initMouseEvent(
+    //     'click',
+    //     true,
+    //     true,
+    //     document.defaultView,
+    //     0,
+    //     20,
+    //     20,
+    //     20,
+    //     20,
+    //     false,
+    //     false,
+    //     false,
+    //     false,
+    //     0,
+    //     spotifyPlayer
+    // )
+    // console.log(oEvent)
+    // spotifyPlayer.dispatchEvent(oEvent)
+
+    await new Promise((res) => setTimeout(res, 1000))
+
+    const coordinates = spotifyPlayer.getBoundingClientRect()
+
+    const event = new MouseEvent('click', {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        clientX: coordinates.x + 40,
+        clientY: coordinates.y + 40
+    })
+
+    // document.dispatchEvent(event)
+    document.querySelector('iframe').contentWindow.document.querySelector('[title="Play"]').click()
+}
+
 async function convertASCII(canvas, displaySize) {
-    const fontHeight = 12
+    const fontHeight = 24
 
     const outputContext = canvas.getContext('2d')
     const hiddenCanvas = document.getElementById('hiddenCanvas')
@@ -186,3 +257,7 @@ function getAverageRGB(frame) {
 
 // listen for load event in the window
 window.addEventListener('load', run)
+
+window.addEventListener('click', function (data) {
+    console.log(data)
+})
