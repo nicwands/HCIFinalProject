@@ -10,7 +10,7 @@
 .video-area {
     position: relative;
     width: 100%;
-    background: var(--black);
+    background: rgba(29, 25, 20, 0.7);
 }
 .video-area canvas {
     position: absolute;
@@ -21,7 +21,7 @@
     width: 100%;
 }
 video {
-    /* opacity: 0; */
+    opacity: 0;
     display: block;
 }
 .emotion-header {
@@ -79,8 +79,6 @@ video {
     transition: opacity 200ms ease-in-out;
 }
 
-.test-box {
-    width: 20px;
-    height: 20px;
-    position: absolute;
+.canvas-image {
+    display: none;
 }

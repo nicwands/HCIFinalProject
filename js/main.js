@@ -6,27 +6,52 @@ const emotionHeader = document.getElementById('emotionHeader')
 const spotifyPlayer = document.getElementById('spotifyPlayer')
 const playerShadow = document.getElementById('shadow')
 
-let curExpression = 'neutral'
+// Emotion images
+const cloudImg = document.getElementById('cloudImg')
+const devilImg = document.getElementById('devilImg')
+const haloImg = document.getElementById('haloImg')
+const exclamationImg = document.getElementById('exclamationImg')
+
+let curExpressionRead = 'neutral'
+let curExpressionLoaded = 'neutral'
+let curDetections = []
 let expressionTimer = 0
 let fullyLoaded = false
 
 let lastFrameTime = 0
 
 const emotionData = {
-    neutral: {
-        iframeSrc: ''
-    },
     happy: {
-        iframeSrc: 'https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup'
+        color: '#48ac8e',
+        iframeSrc: 'https://open.spotify.com/embed/playlist/0dE8vbdraRNCDl1NsYONup',
+        trackingImg: haloImg,
+        imgXOffset: 0,
+        imgYOffset: -75,
+        widthOffset: 0
     },
     sad: {
-        iframeSrc: 'https://open.spotify.com/embed/playlist/17Y3RLFVntdr03GZKu0cGq'
+        color: '#4888ac',
+        iframeSrc: 'https://open.spotify.com/embed/playlist/17Y3RLFVntdr03GZKu0cGq',
+        trackingImg: cloudImg,
+        imgXOffset: 0,
+        imgYOffset: 0,
+        widthOffset: 0
     },
     surprised: {
-        iframeSrc: 'https://open.spotify.com/embed/playlist/43Fufavc3oJplTbaDkcdQg'
+        color: '#5648ac',
+        iframeSrc: 'https://open.spotify.com/embed/playlist/43Fufavc3oJplTbaDkcdQg',
+        trackingImg: exclamationImg,
+        imgXOffset: 0,
+        imgYOffset: -50,
+        widthOffset: 150
     },
     angry: {
-        iframeSrc: 'https://open.spotify.com/embed/playlist/1lQDVNlOfd8jkcvdUbU25J'
+        color: '#ac4848',
+        iframeSrc: 'https://open.spotify.com/embed/playlist/1lQDVNlOfd8jkcvdUbU25J',
+        trackingImg: devilImg,
+        imgXOffset: 0,
+        imgYOffset: 0,
+        widthOffset: 0
     }
 }
 
@@ -69,6 +94,8 @@ videoEl.addEventListener('play', () => {
 async function processFrame(canvas, displaySize) {
     await detectFace(canvas, displaySize)
     // await convertASCII(canvas, displaySize)
+    await drawImages(canvas)
+    await drawFeatures(canvas)
 
     window.requestAnimationFrame(async function (currentFrameTime) {
         const elapsedTime = currentFrameTime - lastFrameTime
@@ -91,16 +118,14 @@ async function detectFace(canvas, displaySize) {
         .withFaceLandmarks(true)
         .withFaceExpressions()
 
-    // console.log(detections)
-
     await readExpression(detections)
 
     const resizedDetections = await faceapi.resizeResults(detections, displaySize)
+    const ctx = canvas.getContext('2d')
+    await ctx.clearRect(0, 0, canvas.width, canvas.height)
+    // await faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
 
-    await canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-    // await faceapi.draw.drawDetections(canvas, resizedDetections)
-    await faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-    // await faceapi.draw.drawFaceExpressions(canvas, resizedDetections)
+    curDetections = detections
 }
 
 // find the most likely expression
@@ -118,8 +143,13 @@ async function readExpression(detections) {
             }
         })
 
-        if (highestGrade > 0.8 && expressionRead !== 'neutral') {
-            if (!(fullyLoaded && expressionRead === curExpression)) {
+        if (
+            highestGrade > 0.8 &&
+            expressionRead !== 'neutral' &&
+            expressionRead !== 'disgusted' &&
+            expressionRead !== 'fearful'
+        ) {
+            if (!(fullyLoaded && expressionRead === curExpressionRead)) {
                 await updateEmotion(expressionRead)
             }
         }
@@ -128,81 +158,42 @@ async function readExpression(detections) {
 
 async function updateEmotion(expressionRead) {
     // expression changes
-    if (curExpression !== expressionRead) {
+    if (curExpressionRead !== expressionRead) {
         // update current expression
-        curExpression = expressionRead
+        curExpressionRead = expressionRead
         fullyLoaded = false
 
         // reset color box
         expressionTimer = 0
         colorBox.style.height = 0
         colorBox.className = ''
-        colorBox.className = curExpression
+        colorBox.className = curExpressionRead
         // expression stays the same
     } else {
-        if (expressionTimer < 96) {
+        if (expressionTimer < 100) {
             // increase height of the box by 4%
             expressionTimer += 4
             colorBox.style.height = expressionTimer + '%'
-        } else if (expressionTimer === 96) {
+        } else if (expressionTimer === 100) {
             colorBox.style.height = '100%'
+            curExpressionLoaded = curExpressionRead
             fullyLoaded = true
-
-            // update emotion header
-            emotionHeader.innerHTML = curExpression.toUpperCase()
+            document.body.className = ''
+            document.body.className = curExpressionLoaded
+            emotionHeader.innerHTML = curExpressionLoaded.toUpperCase()
 
             // update spotify player
             spotifyPlayer.style.opacity = '0'
             playerShadow.style.opacity = '0'
-            spotifyPlayer.src = emotionData[curExpression].iframeSrc
+            spotifyPlayer.src = emotionData[curExpressionLoaded].iframeSrc
             playerShadow.className = ''
-            playerShadow.className = curExpression
+            playerShadow.className = curExpressionLoaded
             spotifyPlayer.addEventListener('load', function () {
                 spotifyPlayer.style.opacity = '1'
                 playerShadow.style.opacity = '1'
-                simulateClick()
             })
         }
     }
-}
-
-async function simulateClick() {
-    console.log('in simulate')
-    // oEvent = document.createEvent('MouseEvents')
-    // oEvent.initMouseEvent(
-    //     'click',
-    //     true,
-    //     true,
-    //     document.defaultView,
-    //     0,
-    //     20,
-    //     20,
-    //     20,
-    //     20,
-    //     false,
-    //     false,
-    //     false,
-    //     false,
-    //     0,
-    //     spotifyPlayer
-    // )
-    // console.log(oEvent)
-    // spotifyPlayer.dispatchEvent(oEvent)
-
-    await new Promise((res) => setTimeout(res, 1000))
-
-    const coordinates = spotifyPlayer.getBoundingClientRect()
-
-    const event = new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: true,
-        clientX: coordinates.x + 40,
-        clientY: coordinates.y + 40
-    })
-
-    // document.dispatchEvent(event)
-    document.querySelector('iframe').contentWindow.document.querySelector('[title="Play"]').click()
 }
 
 async function convertASCII(canvas, displaySize) {
@@ -255,9 +246,49 @@ function getAverageRGB(frame) {
     }
 }
 
+async function drawImages(canvas) {
+    if (curDetections[0] && curExpressionLoaded !== 'neutral') {
+        const ctx = canvas.getContext('2d')
+        const curData = emotionData[curExpressionLoaded]
+
+        const imgEl = curData.trackingImg
+        const imgWidth = curDetections[0].detection._box._width + curData.widthOffset
+        const imgHeight = (imgWidth / imgEl.width) * imgEl.height
+        const imgX = curDetections[0].detection._box._x + curData.imgXOffset - curData.widthOffset / 2
+        const imgY = curDetections[0].detection._box._y - imgHeight + curData.imgYOffset
+
+        await ctx.drawImage(imgEl, imgX, imgY, imgWidth, imgHeight)
+    }
+}
+
+async function drawFeatures(canvas) {
+    const ctx = canvas.getContext('2d')
+
+    if (curDetections[0]) {
+        if (curExpressionLoaded === 'neutral') {
+            drawEye(ctx, 36, 39, 37, 41, '#ac7e48')
+            drawEye(ctx, 42, 45, 47, 43, '#ac7e48')
+        } else if (curDetections[0] && curExpressionLoaded !== 'neutral') {
+            const curData = emotionData[curExpressionLoaded]
+
+            drawEye(ctx, 36, 39, 37, 41, curData.color)
+            drawEye(ctx, 42, 45, 47, 43, curData.color)
+        }
+    }
+}
+
+function drawEye(ctx, x1, x2, y1, y2, fillColor) {
+    const d = curDetections[0].landmarks._positions
+
+    const circleX = (d[x2].x - d[x1].x) / 2 + d[x1].x
+    const circleY = (d[y2].y - d[y1].y) / 2 + d[y1].y
+    const circleRadius = (d[x2].x - d[x1].x) / 2
+
+    ctx.beginPath()
+    ctx.arc(circleX, circleY, circleRadius, 0, 2 * Math.PI)
+    ctx.fillStyle = fillColor
+    ctx.fill()
+}
+
 // listen for load event in the window
 window.addEventListener('load', run)
-
-window.addEventListener('click', function (data) {
-    console.log(data)
-})
