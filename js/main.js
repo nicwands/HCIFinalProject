@@ -93,7 +93,7 @@ videoEl.addEventListener('play', () => {
 // call all frame processes here and repeat on animation frame
 async function processFrame(canvas, displaySize) {
     await detectFace(canvas, displaySize)
-    // await convertASCII(canvas, displaySize)
+    await convertASCII(canvas, displaySize)
     await drawImages(canvas)
     await drawFeatures(canvas)
 
@@ -262,17 +262,33 @@ async function drawImages(canvas) {
 }
 
 async function drawFeatures(canvas) {
-    const ctx = canvas.getContext('2d')
-
     if (curDetections[0]) {
+        const ctx = canvas.getContext('2d')
+        const d = curDetections[0].landmarks._positions
+
         if (curExpressionLoaded === 'neutral') {
+            // all features drawn from screen orientation
+            // left
             drawEye(ctx, 36, 39, 37, 41, '#ac7e48')
+            drawEyeBrow(ctx, d[17].x, d[21].x, d[17].y, d[21].y, true, '#ac7e48')
+
+            // right
             drawEye(ctx, 42, 45, 47, 43, '#ac7e48')
+            drawEyeBrow(ctx, d[22].x, d[26].x, d[22].y, d[26].y, false, '#ac7e48')
+
+            drawMouth(ctx, d[48].x, d[54].x, d[48].y, d[54].y, '#ac7e48')
         } else if (curDetections[0] && curExpressionLoaded !== 'neutral') {
             const curData = emotionData[curExpressionLoaded]
 
+            // left
             drawEye(ctx, 36, 39, 37, 41, curData.color)
+            drawEyeBrow(ctx, d[17].x, d[21].x, d[17].y, d[21].y, true, curData.color)
+
+            //right
             drawEye(ctx, 42, 45, 47, 43, curData.color)
+            drawEyeBrow(ctx, d[22].x, d[26].x, d[22].y, d[26].y, false, curData.color)
+
+            drawMouth(ctx, d[48].x, d[54].x, d[48].y, d[54].y, curData.color)
         }
     }
 }
@@ -288,6 +304,78 @@ function drawEye(ctx, x1, x2, y1, y2, fillColor) {
     ctx.arc(circleX, circleY, circleRadius, 0, 2 * Math.PI)
     ctx.fillStyle = fillColor
     ctx.fill()
+}
+
+function drawEyeBrow(ctx, x1, x2, y1, y2, left, fillColor) {
+    const width = x2 - x1
+    const height = 10
+
+    let deg
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.translate(x1 + width / 2, y1 + height / 2)
+    const angleRad = Math.atan((y2 - y1) / width)
+    ctx.rotate(angleRad)
+
+    switch (curExpressionRead) {
+        case 'happy' || 'neutral':
+            ctx.rect(-width / 2, -15, x2 - x1, height)
+            break
+        case 'angry':
+            left ? (deg = 15) : (deg = 345)
+            ctx.rotate(deg * (Math.PI / 180))
+            ctx.rect(-width / 2, -30, x2 - x1, height)
+            break
+        case 'sad':
+            left ? (deg = 330) : (deg = 30)
+            ctx.rotate(deg * (Math.PI / 180))
+            ctx.rect(-width / 2, -15, x2 - x1, height)
+            break
+        case 'surprised':
+            ctx.ellipse(0, 0, width / 2, (width / 2) * 0.5, 0, Math.PI, 2 * Math.PI)
+            break
+    }
+
+    ctx.fillStyle = fillColor
+    ctx.fill()
+    ctx.restore()
+}
+
+function drawMouth(ctx, x1, x2, y1, y2, fillColor) {
+    const width = x2 - x1
+    const height = 15
+
+    const circleX = (x2 - x1) / 2 + x1
+    const circleY = (y2 - y1) / 2 + +y1
+    const circleWidth = width / 2
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.translate(x1 + width / 2, y1 + height / 2)
+    const angleRad = Math.atan((y2 - y1) / width)
+    ctx.rotate(angleRad)
+
+    switch (curExpressionRead) {
+        case 'happy':
+            ctx.ellipse(0, 0, circleWidth, circleWidth * 0.5, 0, 0, Math.PI)
+            break
+        case 'angry' || 'neutral':
+            ctx.rect(-width / 2, -height / 2, width, height)
+            break
+        case 'sad':
+            ctx.ellipse(0, 0, circleWidth, circleWidth * 0.5, 0, Math.PI, 2 * Math.PI)
+            break
+        case 'surprised':
+            ctx.ellipse(0, 0, circleWidth, circleWidth * 1.15, 0, 0, 2 * Math.PI)
+            break
+        default:
+            ctx.rect(-width / 2, -height / 2, width, height)
+    }
+
+    ctx.fillStyle = fillColor
+    ctx.fill()
+    ctx.restore()
 }
 
 // listen for load event in the window
