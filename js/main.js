@@ -1,5 +1,7 @@
 // Global vars
 const videoEl = document.getElementById('inputVideo')
+const accessContainer = document.getElementById('accessContainer')
+const animationContainer = document.getElementById('animationContainer')
 const camContainer = document.getElementById('camContainer')
 const colorBox = document.getElementById('colorBox')
 const emotionHeader = document.getElementById('emotionHeader')
@@ -12,6 +14,7 @@ const devilImg = document.getElementById('devilImg')
 const haloImg = document.getElementById('haloImg')
 const exclamationImg = document.getElementById('exclamationImg')
 
+let animationStarted = false
 let curExpressionRead = 'neutral'
 let curExpressionLoaded = 'neutral'
 let curDetections = []
@@ -69,8 +72,11 @@ async function run() {
         .getUserMedia({
             video: { width: { min: 1024, ideal: 1280, max: 1920 }, height: { min: 576, ideal: 720, max: 1080 } }
         })
-        .then((stream) => {
+        .then(async (stream) => {
             videoEl.srcObject = stream
+            //transition to app
+            accessContainer.style.display = 'none'
+            camContainer.style.display = 'block'
         })
         .catch((err) => {
             console.error('error:', err)
@@ -92,6 +98,10 @@ videoEl.addEventListener('play', () => {
 
 // call all frame processes here and repeat on animation frame
 async function processFrame(canvas, displaySize) {
+    if (!animationStarted) {
+        onboardAnimation()
+        animationStarted = true
+    }
     await detectFace(canvas, displaySize)
     await convertASCII(canvas, displaySize)
     await drawImages(canvas)
@@ -105,10 +115,24 @@ async function processFrame(canvas, displaySize) {
         if (elapsedTime < 200) {
             await new Promise((res) => setTimeout(res, 200 - elapsedTime))
         }
-
         lastFrameTime = currentFrameTime
+
         processFrame(canvas, displaySize)
     })
+}
+
+async function onboardAnimation() {
+    const images = Array.prototype.slice.call(animationContainer.childNodes).filter(function (child) {
+        return child.nodeName === 'IMG'
+    })
+
+    for (let i = 0; i < images.length; i++) {
+        images[i].style.opacity = 1
+        await new Promise((res) => setTimeout(res, 2000))
+        images[i].style.opacity = 0
+    }
+
+    document.querySelector('#camContainer canvas').style.opacity = 1
 }
 
 // detect face, landmarks and expressions
@@ -119,12 +143,6 @@ async function detectFace(canvas, displaySize) {
         .withFaceExpressions()
 
     await readExpression(detections)
-
-    const resizedDetections = await faceapi.resizeResults(detections, displaySize)
-    const ctx = canvas.getContext('2d')
-    await ctx.clearRect(0, 0, canvas.width, canvas.height)
-    // await faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-
     curDetections = detections
 }
 
@@ -205,6 +223,8 @@ async function convertASCII(canvas, displaySize) {
     hiddenCanvas.width = displaySize.width
     hiddenCanvas.height = displaySize.height
 
+    await outputContext.clearRect(0, 0, canvas.width, canvas.height)
+
     await hiddenContext.drawImage(videoEl, 0, 0, displaySize.width, displaySize.height)
 
     canvas.textBaseline = 'top'
@@ -218,7 +238,7 @@ async function convertASCII(canvas, displaySize) {
             const frameSection = hiddenContext.getImageData(x, y, fontWidth, fontHeight)
             const { r, g, b } = getAverageRGB(frameSection)
 
-            const asciiCode = Math.floor(Math.random() * 60 + 60)
+            const asciiCode = Math.floor(Math.random() * 60 + 30)
 
             outputContext.fillStyle = `rgb(${r},${g},${b})`
             outputContext.fillText(String.fromCharCode(asciiCode), x, y)
@@ -320,7 +340,7 @@ function drawEyeBrow(ctx, x1, x2, y1, y2, left, fillColor) {
 
     switch (curExpressionRead) {
         case 'happy' || 'neutral':
-            ctx.rect(-width / 2, -15, x2 - x1, height)
+            ctx.rect(-width / 2, -25, x2 - x1, height)
             break
         case 'angry':
             left ? (deg = 15) : (deg = 345)
@@ -333,8 +353,10 @@ function drawEyeBrow(ctx, x1, x2, y1, y2, left, fillColor) {
             ctx.rect(-width / 2, -15, x2 - x1, height)
             break
         case 'surprised':
-            ctx.ellipse(0, 0, width / 2, (width / 2) * 0.5, 0, Math.PI, 2 * Math.PI)
+            ctx.ellipse(0, -20, width / 2, (width / 2) * 0.5, 0, Math.PI, 2 * Math.PI)
             break
+        default:
+            ctx.rect(-width / 2, -15, x2 - x1, height)
     }
 
     ctx.fillStyle = fillColor

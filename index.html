@@ -24,8 +24,12 @@
         <img id="exclamationImg" class="canvas-image" src="images/exclamation.png" />
 
         <div class="contained app-container">
+            <div id="accessContainer">
+                <p>Please allow access to your webcam if asked</p>
+            </div>
+
             <div class="video-area" id="camContainer">
-                <h1 class="emotion-header" id="emotionHeader">HOW ARE YOU FEELING?</h1>
+                <h1 class="emotion-header" id="emotionHeader">HOW ARE YOU FEELING TODAY?</h1>
 
                 <div class="playlist-container">
                     <div id="shadow" class="neutral"></div>
@@ -38,6 +42,13 @@
                         allowtransparency="true"
                         allow="encrypted-media"
                     ></iframe>
+                </div>
+
+                <div id="animationContainer">
+                    <img class="animation-img" src="images/happy-face.png" />
+                    <img class="animation-img" src="images/angry-face.png" />
+                    <img class="animation-img" src="images/sad-face.png" />
+                    <img class="animation-img" src="images/surprised-face.png" />
                 </div>
 
                 <video id="inputVideo" autoplay muted></video>
